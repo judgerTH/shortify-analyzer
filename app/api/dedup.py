@@ -1,23 +1,13 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
+from typing import List
 
-router = APIRouter(prefix="/analysis", tags=["analysis"])
+from app.dto.request import DedupRequest
+from app.dto.response import DedupResponse
+from app.service.dedup_service import DedupService
 
+router = APIRouter()
+service = DedupService()
 
-class DedupRequest(BaseModel):
-    title: str
-    content: str
-
-
-class DedupResponse(BaseModel):
-    is_duplicate: bool
-    score: float
-
-
-@router.post("/dedup", response_model=DedupResponse)
-def dedup(req: DedupRequest):
-    # 지금은 연결 확인용 더미 구현
-    return DedupResponse(
-        is_duplicate=False,
-        score=0.0
-    )
+@router.post("/analysis/dedup/batch", response_model=List[DedupResponse])
+def dedup_batch(requests: List[DedupRequest]):
+    return service.check_batch(requests)
