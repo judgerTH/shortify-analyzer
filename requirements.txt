@@ -1,3 +1,9 @@
 fastapi
 uvicorn
 scikit-learn
+numpy
+sqlalchemy
+pymysql
+python-dotenv
+sentence-transformers
+torch
