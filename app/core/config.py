@@ -24,3 +24,9 @@ class DedupConfig:
 
     # 기사 본문 최대 길이 (토큰 절약)
     CONTENT_MAX_CHARS: int = int(os.getenv("CONTENT_MAX_CHARS", "500"))
+
+    # 제목 가중치: 제목을 N배 반복하여 본문보다 강조 (0=비활성화)
+    TITLE_WEIGHT: int = int(os.getenv("TITLE_WEIGHT", "3"))
+
+    # 날짜 필터: 발행일 기준 ±N일 내 기사끼리만 비교 (0=비활성화)
+    DATE_WINDOW_DAYS: int = int(os.getenv("DATE_WINDOW_DAYS", "1"))
