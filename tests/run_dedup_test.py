@@ -11,7 +11,11 @@ Options:
   --date-window 1        날짜 필터 범위 (일)
   --category 정치        카테고리 필터
 
-의존성: pip install pymysql sshtunnel==0.4.0 paramiko==3.4.0 scikit-learn numpy
+환경변수 설정 (.env 또는 직접 export):
+  SSH_HOST, SSH_PORT, SSH_USER, SSH_PASS
+  DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME
+
+의존성: pip install pymysql sshtunnel==0.4.0 paramiko==3.4.0 scikit-learn numpy python-dotenv
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,21 +25,31 @@ import re
 import time
 import numpy as np
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
-SSH_HOST = "61.77.190.203"
-SSH_PORT = 22
-SSH_USER = "jade"
-SSH_PASS = "2129981a?!"
-DB_HOST  = "127.0.0.1"
-DB_PORT  = 3306
-DB_USER  = "jade"
-DB_PASS  = "2129981a?!"
-DB_NAME  = "shortify"
+load_dotenv()
+
+# ── SSH / DB 설정 (환경변수로 주입) ──────────────────────────────
+SSH_HOST = os.getenv("SSH_HOST", "")
+SSH_PORT = int(os.getenv("SSH_PORT", "22"))
+SSH_USER = os.getenv("SSH_USER", "")
+SSH_PASS = os.getenv("SSH_PASS", "")
+
+DB_HOST  = os.getenv("DB_HOST", "127.0.0.1")
+DB_PORT  = int(os.getenv("DB_PORT", "3306"))
+DB_USER  = os.getenv("DB_USER", "")
+DB_PASS  = os.getenv("DB_PASS", "")
+DB_NAME  = os.getenv("DB_NAME", "shortify")
+# ───────────────────────────────────────────────────────────────
 
 
 def connect_db():
     from sshtunnel import SSHTunnelForwarder
     import pymysql
+
+    if not SSH_HOST or not SSH_USER:
+        raise ValueError("SSH_HOST, SSH_USER 환경변수를 설정해주세요. (.env 파일 또는 export)")
+
     tunnel = SSHTunnelForwarder(
         (SSH_HOST, SSH_PORT),
         ssh_username=SSH_USER,
@@ -233,11 +247,9 @@ def main():
     if args.date_filter:
         print(f"=== 날짜 필터 ON vs OFF 비교 (title_weight, threshold={args.threshold}) ===")
         fn = EXPERIMENTS["title_weight"]
-
-        g_off, _, _ = run_tfidf(articles, fn, args.threshold, None)
+        g_off, _, _     = run_tfidf(articles, fn, args.threshold, None)
         g_on,  _, sk_on = run_tfidf(articles, fn, args.threshold, date_window)
         total = len(articles)
-
         print(f"  날짜필터 OFF: {len(g_off)}그룹 | 중복제거={total-len(g_off)}건 | max_size={max(g['groupSize'] for g in g_off)}")
         print(f"  날짜필터 ON (±{date_window}일): {len(g_on)}그룹 | 중복제거={total-len(g_on)}건 | max_size={max(g['groupSize'] for g in g_on)} | 스킵={sk_on:,}쌍")
         print()
